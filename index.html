@@ -25,14 +25,16 @@
         let canvas = document.getElementById("myCanvas");
         let ctx = canvas.getContext("2d");
         let dir = 0, speed = 5, score = 0;
-        let pause = false, loses=false;
+        let pause = false, loses = false;
         //level
         let music = new Audio();
         music.src = "./src/assets/sounds/background-music.mp3";
         //Deku
         let dekuscrub = new Image();
+        let deku_nut = new Image();
         let dekuscrib_spit = new Audio();
         dekuscrub.src = "./src/assets/images/dekuscrub.png";
+        deku_nut.src = "./src/assets/images/deku-nut.png";
         dekuscrib_spit.src = "./src/assets/sounds/dekuscrub_spit.mp3";
         //Link
         let link = new Image();
@@ -69,17 +71,23 @@
                 ctx.fillRect(this.x, this.y, this.ancho, this.alto);
             }
         }
+        let wallscolor = "#70865e"
         const muros = [];
-        muros.push(new Rectangulo(600, 60, 0, 0, "rgba(0, 0, 0, 0)"));
-        muros.push(new Rectangulo(600, 60, 560, 0, "rgba(0, 0, 0, 0)"));
-        muros.push(new Rectangulo(60, 600, 0, 600, "rgba(0, 0, 0, 0)"));
-        muros.push(new Rectangulo(60, 600, 0, 0, "rgba(0, 0, 0, 0)"));
+        muros.push(new Rectangulo(600, 50, 0, 0, wallscolor));
+        muros.push(new Rectangulo(600, 50, 550, 0, wallscolor));
+        muros.push(new Rectangulo(40, 600, 0, 600, wallscolor));
+        muros.push(new Rectangulo(40, 600, 0, 0, wallscolor));
+
         const enemies = [];
-        enemies.push(new Rectangulo(40, 40, 560, 100, "gray"));
-        enemies.push(new Rectangulo(40, 40, 560, 200, "gray"));
-        enemies.push(new Rectangulo(40, 40, 560, 300, "gray"));
+        enemies.push(new Rectangulo(40, 40, 555, 100, "gray"));
+        enemies.push(new Rectangulo(40, 40, 555, 200, "gray"));
+        enemies.push(new Rectangulo(40, 40, 555, 300, "gray"));
+        const nuts = [];
+        enemies.forEach(enemy => {
+            nuts.push(new Rectangulo(enemy.alto, enemy.ancho, enemy.x, enemy.y, "gray"));
+        });
         const player = new Rectangulo(50, 50, 300, 550, "black");
-        const target = new Rectangulo(40, 30, 350, 350, "black");
+        const coin = new Rectangulo(40, 30, 350, 350, "black");
         document.addEventListener("keydown", (e) => {
             music.play();
             color = random_rgba();
@@ -87,30 +95,30 @@
             /* console.log(e.keyCode); */
             switch (e.keyCode) {
                 case 87: case 38://w
-                if (!pause) {
+                    if (!pause) {
                         link_step.play();
-                        if ((player.y-50) < 0) { return }
+                        if ((player.y - 50) < 0) { return }
                         player.y -= 50;
                     };
                     break;
                 case 65: case 37://a
                     if (!pause) {
                         link_step.play();
-                        if ((player.x-50) < 0) { return }
+                        if ((player.x - 50) < 0) { return }
                         player.x -= 50;
                     };
                     break;
                 case 83: case 40://s
                     if (!pause) {
                         link_step.play();
-                        if ((player.y+50) > 570) { return }
+                        if ((player.y + 50) > 570) { return }
                         player.y += 50;
                     };
                     break;
                 case 68: case 39://d
                     if (!pause) {
                         link_step.play();
-                        if ((player.x+50) > 570) { return }
+                        if ((player.x + 50) > 570) { return }
                         player.x += 50;
                     };
                     break;
@@ -121,29 +129,29 @@
         })
         function update() {
             if (!pause) {
-                switch (dir) {
+                /* switch (dir) {
                     case 1:
-                        /* y -= 10; */
+                        // y -= 10; 
                         player.y -= speed;
                         if (player.y < -50) { player.y = 600 }
                         break;
                     case 2:
-                        /* x -= 10; */
+                        // x -= 10; 
                         player.x -= speed;
                         if (player.x < -50) { player.x = 600 }
                         break;
                     case 3:
                         player.y += speed;
-                        /* y += 10; */
+                        // y += 10; 
                         if (player.y > 600) { player.y = 0 }
                         break;
                     case 4:
                         player.x += speed;
-                        /* x += 10; */
+                        // x += 10; 
                         if (player.x > 600) { player.x = 0 }
                         break;
 
-                }
+                } */
                 //pendientes
                 muros.forEach(muro => {
                     if (muro.seTocan(player)) {
@@ -163,26 +171,45 @@
 
                         }
                     }
-                    if (muro.seTocan(target)) {
-                        target.x = Math.random() * 560;
-                        target.y = Math.random() * 560;
-                        if (player.seTocan(target)) {
-                            target.x = Math.random() * 560;
-                            target.y = Math.random() * 560;
-                        }
+                    if (muro.seTocan(coin)) {
+                        coin.x = Math.random() * 560;
+                        coin.y = Math.random() * 560;
                     }
                 });
-                if (player.seTocan(target)) {
+
+                /* enemies.forEach(enemy => {
+                    if (enemy.seTocan(player)) {
+
+                    }
+                    if (enemy.seTocan(coin)) {
+                        coin.x = Math.random() * 560;
+                        coin.y = Math.random() * 560;
+                        if (player.seTocan(coin)) {
+                            coin.x = Math.random() * 560;
+                            coin.y = Math.random() * 560;
+                        }
+                    }
+                }); */
+                nuts.forEach(nut => {
+                    if ((nut.x - 5) > 10)
+                        nut.x -= 1
+                    else {
+                        nut.x = 560;
+                        dekuscrib_spit.play();
+                    }
+                    //player hit
+                    if (player.seTocan(nut)) {
+                        link_dies.play();
+                        loses = true;
+                    }
+                });
+                if (player.seTocan(coin)) {
                     rupiaSound.play();
-                    target.x = Math.random() * 560;
-                    target.y = Math.random() * 560;
+                    coin.x = Math.random() * 560;
+                    coin.y = Math.random() * 560;
                     score += 10;
                 }
-                if (player.seTocan(target)) {
-                    link_dies.play();
-                    loses = true;
-                }
-                
+
             }
             repaint();
             /* crearRectangulo(ctx, color, x, y, size); */
@@ -190,22 +217,25 @@
         }
         function repaint() {
             if (!pause) {
-                ctx.fillStyle = "lightgray";
+                ctx.fillStyle = "#ede1b5";
                 ctx.fillRect(0, 0, 600, 600);
                 ctx.beginPath();
                 ctx.font = "30px verdana";
                 ctx.fillStyle = 'black';
                 ctx.fillText("Score:" + score, 10, 30);
                 player.color = random_rgba();
+                muros.forEach(muro => {
+                    muro.paint(ctx);
+                });
                 //player.paint(ctx);
                 ctx.drawImage(link, player.x, player.y, player.ancho, player.alto);
-                //target.paint(ctx);
-                ctx.drawImage(rupia, target.x, target.y, target.ancho, target.alto);
+                //coin.paint(ctx);
+                ctx.drawImage(rupia, coin.x, coin.y, coin.ancho, coin.alto);
                 enemies.forEach(enemy => {
                     ctx.drawImage(dekuscrub, enemy.x, enemy.y, enemy.ancho, enemy.alto);
                 });
-                muros.forEach(muro => {
-                    muro.paint(ctx);
+                nuts.forEach(nut => {
+                    ctx.drawImage(deku_nut, nut.x, nut.y + 20, nut.ancho / 2, nut.alto / 2);
                 });
                 ctx.stroke();
                 ctx.fill();
