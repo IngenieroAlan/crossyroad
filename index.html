@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Actividades</title>
+    <style type="text/css">
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="myCanvas" width="600" height="600" style="background-color: lightgray;">Tu navegador no soporta
+        canvas</canvas>
+    <!-- <img src="./logo_uabcs.png" width="100" height="100" id="imagen"> -->
+    <script>
+        let canvas = document.getElementById("myCanvas");
+        let ctx = canvas.getContext("2d");
+        let dir = 0, speed = 5, score = 0;
+        let pause = false, loses=false;
+        //level
+        let music = new Audio();
+        music.src = "./src/assets/sounds/background-music.mp3";
+        //Deku
+        let dekuscrub = new Image();
+        let dekuscrib_spit = new Audio();
+        dekuscrub.src = "./src/assets/images/dekuscrub.png";
+        dekuscrib_spit.src = "./src/assets/sounds/dekuscrub_spit.mp3";
+        //Link
+        let link = new Image();
+        let link_step = new Audio();
+        let link_dies = new Audio();
+        link.src = "./src/assets/images/link.png";
+        link_step.src = "./src/assets/sounds/link_step.mp3";
+        link_dies.src = "./src/assets/sounds/link_dies.mp3";
+        //Rupee
+        let rupia = new Image();
+        let rupiaSound = new Audio();
+        rupia.src = "./src/assets/images/rupia.png";
+        rupiaSound.src = "./src/assets/sounds/rupee_sound.mp3";
+
+        class Rectangulo {
+            constructor(alto, ancho, x, y, color) {
+                this.alto = alto;
+                this.ancho = ancho;
+                this.x = x;
+                this.y = y;
+                this.color = color;
+            }
+            seTocan(target) {
+                if (this.x < target.x + target.ancho
+                    && this.x + this.ancho > target.x
+                    && this.y < target.y + target.alto
+                    && this.y + this.alto > target.y) {
+                    return true;
+                }
+                return false;
+            }
+            paint(ctx) {
+                ctx.fillStyle = this.color;
+                ctx.fillRect(this.x, this.y, this.ancho, this.alto);
+            }
+        }
+        const muros = [];
+        muros.push(new Rectangulo(600, 40, 0, 0, "rgba(0, 0, 0, 0)"));
+        muros.push(new Rectangulo(600, 40, 560, 0, "rgba(0, 0, 0, 0)"));
+        muros.push(new Rectangulo(0, 600, 100, 570, "rgba(0, 0, 0, 0)"));
+        muros.push(new Rectangulo(0, 600, 100, 0, "red"));
+        const enemies = [];
+        enemies.push(new Rectangulo(40, 40, 560, 100, "gray"));
+        enemies.push(new Rectangulo(40, 40, 560, 200, "gray"));
+        enemies.push(new Rectangulo(40, 40, 560, 300, "gray"));
+        const player = new Rectangulo(50, 50, 300, 250, "black");
+        const target = new Rectangulo(40, 30, 350, 350, "black");
+        document.addEventListener("keydown", (e) => {
+            music.play();
+            color = random_rgba();
+            //x = Math.floor(Math.random() * 600), y = Math.floor(Math.random() * 600);
+            /* console.log(e.keyCode); */
+            switch (e.keyCode) {
+                case 87: case 38://w
+                    if (!pause) {
+                        dir = 1;
+                        link_step.play();
+                    };
+                    break;
+                case 65: case 37://a
+                    if (!pause) {
+                        dir = 2;
+                        link_step.play();
+                    };
+                    break;
+                case 83: case 40://s
+                    if (!pause) {
+                        dir = 3;
+                        link_step.play();
+                    };
+                    break;
+                case 68: case 39://d
+                    if (!pause) {
+                        dir = 4;
+                        link_step.play();
+                    };
+                    break;
+                case 32://Spacebar
+                    pause = !pause;
+                    break;
+            }
+        })
+        function update() {
+            if (!pause) {
+                switch (dir) {
+                    case 1:
+                        /* y -= 10; */
+                        player.y -= speed;
+                        if (player.y < -50) { player.y = 600 }
+                        break;
+                    case 2:
+                        /* x -= 10; */
+                        player.x -= speed;
+                        if (player.x < -50) { player.x = 600 }
+                        break;
+                    case 3:
+                        player.y += speed;
+                        /* y += 10; */
+                        if (player.y > 600) { player.y = 0 }
+                        break;
+                    case 4:
+                        player.x += speed;
+                        /* x += 10; */
+                        if (player.x > 600) { player.x = 0 }
+                        break;
+
+                }
+                //pendientes
+                muros.forEach(muro => {
+                    if (muro.seTocan(player)) {
+                        switch (dir) {
+                            case 1:
+                                player.y += speed;
+                                break;
+                            case 2:
+                                player.x += speed;
+                                break;
+                            case 3:
+                                player.y -= speed;
+                                break;
+                            case 4:
+                                player.x -= speed;
+                                break;
+
+                        }
+                    }
+                    if (muro.seTocan(target)) {
+                        target.x = Math.random() * 560;
+                        target.y = Math.random() * 560;
+                        if (player.seTocan(target)) {
+                            target.x = Math.random() * 560;
+                            target.y = Math.random() * 560;
+                        }
+                    }
+                });
+                if (player.seTocan(target)) {
+                    rupiaSound.play();
+                    target.x = Math.random() * 560;
+                    target.y = Math.random() * 560;
+                    score += 10;
+                }
+                if (player.seTocan(target)) {
+                    link_dies.play();
+                    loses = true;
+                }
+                
+            }
+            repaint();
+            /* crearRectangulo(ctx, color, x, y, size); */
+            window.requestAnimationFrame(update);
+        }
+        function repaint() {
+            if (!pause) {
+                ctx.fillStyle = "lightgray";
+                ctx.fillRect(0, 0, 600, 600);
+                ctx.beginPath();
+                ctx.font = "30px verdana";
+                ctx.fillStyle = 'black';
+                ctx.fillText("Score:" + score, 10, 30);
+                player.color = random_rgba();
+                //player.paint(ctx);
+                ctx.drawImage(link, player.x, player.y, player.ancho, player.alto);
+                //target.paint(ctx);
+                ctx.drawImage(rupia, target.x, target.y, target.ancho, target.alto);
+                enemies.forEach(enemy => {
+                    ctx.drawImage(dekuscrub, enemy.x, enemy.y, enemy.ancho, enemy.alto);
+                });
+                muros.forEach(muro => {
+                    muro.paint(ctx);
+                });
+                ctx.stroke();
+                ctx.fill();
+                ctx.closePath();
+            } else {
+                ctx.fillStyle = "rgba(122, 122, 122, 0.02)";
+                ctx.fillRect(0, 0, 600, 600);
+
+                ctx.font = "30px verdana";
+                ctx.fillStyle = 'white';
+                ctx.fillText("Pause", 270, 300);
+            }
+        }
+        function random_rgba() {
+            var o = Math.round, r = Math.random, s = 255;
+            return 'rgba(' + o(r() * s) + ',' + o(r() * s) + ',' + o(r() * s) + ',' + r().toFixed(1) + ')';
+        }
+        window.requestAnimationFrame = (function () {
+            return window.requestAnimationFrame ||
+                window.webkitRequestAnimationFrame ||
+                window.mozRequestAnimationFrame ||
+                function (callback) {
+                    window.setTimeout(callback, 17);
+                };
+        }());
+        window.requestAnimationFrame(update);
+    </script>
+</body>
+
+</html>
