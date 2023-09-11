@@ -24,11 +24,17 @@
     <script>
         let canvas = document.getElementById("myCanvas");
         let ctx = canvas.getContext("2d");
-        let dir = 0, speed = 5, score = 0;
-        let pause = false, loses = false;
+        let dir = 0, speed = 5, score = 0, level = 1;
+        let pause = false, loses = false, gameoverAntiLoop = false;
+        let startPosition = [
+            x = 300,
+            y = 550,
+        ];
         //level
         let music = new Audio();
+        let gameover = new Audio();
         music.src = "./src/assets/sounds/background-music.mp3";
+        gameover.src = "./src/assets/sounds/gameover.mp3";
         //Deku
         let dekuscrub = new Image();
         let deku_nut = new Image();
@@ -90,7 +96,7 @@
         const coin = new Rectangulo(40, 30, 350, 350, "black");
         document.addEventListener("keydown", (e) => {
             music.play();
-            color = random_rgba();
+            console.log(e.keyCode);
             //x = Math.floor(Math.random() * 600), y = Math.floor(Math.random() * 600);
             /* console.log(e.keyCode); */
             switch (e.keyCode) {
@@ -104,7 +110,7 @@
                 case 65: case 37://a
                     if (!pause) {
                         link_step.play();
-                        if ((player.x - 50) < 0) { return }
+                        if ((player.x - 50) < 50) { return }
                         player.x -= 50;
                     };
                     break;
@@ -118,12 +124,15 @@
                 case 68: case 39://d
                     if (!pause) {
                         link_step.play();
-                        if ((player.x + 50) > 570) { return }
+                        if ((player.x + 50) > 520) { return }
                         player.x += 50;
                     };
                     break;
                 case 32://Spacebar
-                    pause = !pause;
+                    if (!loses) pause = !pause;
+                    break;
+                case 82: case 114:
+                    restart();
                     break;
             }
         })
@@ -190,19 +199,23 @@
                         }
                     }
                 }); */
-                nuts.forEach(nut => {
-                    if ((nut.x - 5) > 10)
-                        nut.x -= 1
+                for (let i = 0; i < nuts.length; i++) {
+                    if ((nuts[i].x - 5) > 50)
+                        nuts[i].x -= i + 1;
                     else {
-                        nut.x = 560;
+                        nuts[i].x = 560;
                         dekuscrib_spit.play();
                     }
                     //player hit
-                    if (player.seTocan(nut)) {
+                    if (player.seTocan(nuts[i])) {
                         link_dies.play();
                         loses = true;
+                        pause = true
                     }
-                });
+                }
+                /* nuts.forEach(nut => {
+                    
+                }); */
                 if (player.seTocan(coin)) {
                     rupiaSound.play();
                     coin.x = Math.random() * 560;
@@ -219,35 +232,73 @@
             if (!pause) {
                 ctx.fillStyle = "#ede1b5";
                 ctx.fillRect(0, 0, 600, 600);
+                muros.forEach(muro => {
+                    muro.paint(ctx);
+                });
                 ctx.beginPath();
                 ctx.font = "30px verdana";
                 ctx.fillStyle = 'black';
                 ctx.fillText("Score:" + score, 10, 30);
-                player.color = random_rgba();
-                muros.forEach(muro => {
-                    muro.paint(ctx);
-                });
-                //player.paint(ctx);
-                ctx.drawImage(link, player.x, player.y, player.ancho, player.alto);
-                //coin.paint(ctx);
-                ctx.drawImage(rupia, coin.x, coin.y, coin.ancho, coin.alto);
-                enemies.forEach(enemy => {
-                    ctx.drawImage(dekuscrub, enemy.x, enemy.y, enemy.ancho, enemy.alto);
-                });
-                nuts.forEach(nut => {
-                    ctx.drawImage(deku_nut, nut.x, nut.y + 20, nut.ancho / 2, nut.alto / 2);
-                });
+                switch (level) {
+                    case 1:
+                        //player.paint(ctx);
+                        ctx.drawImage(link, player.x, player.y, player.ancho, player.alto);
+                        //coin.paint(ctx);
+                        ctx.drawImage(rupia, coin.x, coin.y, coin.ancho, coin.alto);
+                        enemies.forEach(enemy => {
+                            ctx.drawImage(dekuscrub, enemy.x, enemy.y, enemy.ancho, enemy.alto);
+                        });
+                        nuts.forEach(nut => {
+                            ctx.drawImage(deku_nut, nut.x, nut.y + 20, nut.ancho / 2, nut.alto / 2);
+                        });
+                        break;
+                    case 2:
+                        break;
+                    case 3:
+                        break;
+                }
                 ctx.stroke();
                 ctx.fill();
                 ctx.closePath();
             } else {
-                ctx.fillStyle = "rgba(122, 122, 122, 0.02)";
-                ctx.fillRect(0, 0, 600, 600);
+                if (loses) {
+                    music.pause();
+                    if (!gameoverAntiLoop) {
+                        gameover.play();
+                    }
+                    gameoverAntiLoop = true;
+                    ctx.fillStyle = "rgba(0, 0, 0, 0.02)";
+                    ctx.fillRect(0, 0, 600, 600);
 
-                ctx.font = "30px verdana";
-                ctx.fillStyle = 'white';
-                ctx.fillText("Pause", 270, 300);
+                    ctx.font = "30px verdana";
+                    ctx.strokeStyle = 'red';
+                    ctx.strokeText("Game over", 220, 300);
+                    ctx.fillStyle = 'orange';
+                    ctx.fillText("Game over", 220, 300);
+                    ctx.strokeStyle = "";
+                    ctx.font = "16px verdana";
+                    ctx.fillStyle = 'white';
+                    ctx.fillText('Presiona la tecla "R" para volver a intentar.', 140, 350);
+                } else {
+                    ctx.fillStyle = "rgba(122, 122, 122, 0.02)";
+                    ctx.fillRect(0, 0, 600, 600);
+
+                    ctx.font = "30px verdana";
+                    ctx.fillStyle = 'white';
+                    ctx.fillText("Pause", 270, 300);
+                }
             }
+        }
+        function restart() {
+            level = 1;
+            score = 0;
+            loses = false;
+            pause = false;
+            gameoverAntiLoop = false;
+            gameover.pause();
+            link_dies.pause();
+            player.x = startPosition[0];
+            player.y = startPosition[1];
         }
         function random_rgba() {
             var o = Math.round, r = Math.random, s = 255;
