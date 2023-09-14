@@ -6,7 +6,7 @@
     <meta name="viewport"
         content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Actividades</title>
+    <title>Zelda's Road</title>
     <style type="text/css">
         body {
             display: flex;
@@ -24,8 +24,8 @@
     <script>
         let canvas = document.getElementById("myCanvas");
         let ctx = canvas.getContext("2d");
-        let dir = 0, speed = 5, score = 0, level = 1;
-        let pause = false, loses = false, gameoverAntiLoop = false;
+        let dir = 0, speed = 5, score = 0, level = 2;
+        let pause = false, loses = false, gameoverAntiLoop = false, start = false;
         let startPosition = [
             x = 300,
             y = 550,
@@ -54,7 +54,9 @@
         let rupiaSound = new Audio();
         rupia.src = "./src/assets/images/rupia.png";
         rupiaSound.src = "./src/assets/sounds/rupee_sound.mp3";
-
+        //Piedra sheika
+        let piedraSheika = new Image();
+        piedraSheika.src = "./src/assets/images/piedra-sheika.png";
         class Rectangulo {
             constructor(alto, ancho, x, y, color) {
                 this.alto = alto;
@@ -64,10 +66,10 @@
                 this.color = color;
             }
             seTocan(target) {
-                if (this.x < target.x + target.ancho
-                    && this.x + this.ancho > target.x
-                    && this.y < target.y + target.alto
-                    && this.y + this.alto > target.y) {
+                if (this.x < target.x + target.ancho &&
+                    this.x + this.ancho > target.x &&
+                    this.y < target.y + target.alto &&
+                    this.y + this.alto > target.y) {
                     return true;
                 }
                 return false;
@@ -77,6 +79,21 @@
                 ctx.fillRect(this.x, this.y, this.ancho, this.alto);
             }
         }
+        class DekuScrub extends Rectangulo {
+            constructor(alto, ancho, x, y, color, type) {
+                super(alto, ancho, x, y, color);
+                this.type = type;
+            }
+        }
+        class Nut extends Rectangulo {
+            constructor(alto, ancho, x, y, color, speed) {
+                super(alto, ancho, x, y, color);
+                this.speed = speed;
+            }
+            reiniciarPosicion(initX) {
+                this.x = initX;
+            }
+        }
         let wallscolor = "#70865e"
         const muros = [];
         muros.push(new Rectangulo(600, 50, 0, 0, wallscolor));
@@ -84,17 +101,52 @@
         muros.push(new Rectangulo(40, 600, 0, 600, wallscolor));
         muros.push(new Rectangulo(40, 600, 0, 0, wallscolor));
 
-        const enemies = [];
-        enemies.push(new Rectangulo(40, 40, 555, 100, "gray"));
-        enemies.push(new Rectangulo(40, 40, 555, 200, "gray"));
-        enemies.push(new Rectangulo(40, 40, 555, 300, "gray"));
+        const piedras = [];
+
+        const enemies = [
+            [
+                new DekuScrub(40, 40, 555, 100, "gray", 'Strong'),
+                new DekuScrub(40, 40, 555, 200, "gray", 'Normal'),
+                new DekuScrub(40, 40, 555, 300, "gray", 'Weak'),
+            ],
+            [
+                new DekuScrub(40, 40, 555, 100, "gray", 'Strong'),
+                new DekuScrub(40, 40, 555, 200, "gray", 'Strong'),
+                new DekuScrub(40, 40, 555, 300, "gray", 'Normal'),
+                new DekuScrub(40, 40, 555, 400, "gray", 'Normal'),
+                new DekuScrub(40, 40, 555, 500, "gray", 'Strong'),
+            ],
+            [
+                new DekuScrub(40, 40, 555, 100, "gray", 'Strong'),
+                new DekuScrub(40, 40, 555, 200, "gray", 'Strong'),
+                new DekuScrub(40, 40, 555, 300, "gray", 'Strong'),
+            ],
+        ];
+        console.log(enemies);
+        /* enemies.push(new DekuScrub(40, 40, 555, 100, "gray", 'Strong'));
+        enemies.push(new DekuScrub(40, 40, 555, 200, "gray", 'Normal'));
+        enemies.push(new DekuScrub(40, 40, 555, 300, "gray", 'Weak')); */
         const nuts = [];
-        enemies.forEach(enemy => {
-            nuts.push(new Rectangulo(enemy.alto, enemy.ancho, enemy.x, enemy.y, "gray"));
+        //Generar nueces
+        enemies[level - 1].forEach(enemy => {
+            switch (enemy.type) {
+                case 'Strong':
+                    speed = 5;
+                    break;
+                case 'Normal':
+                    speed = 4;
+                    break;
+                case 'Weak':
+                    speed = 3;
+                    break;
+
+            }
+            nuts.push(new Nut(enemy.alto, enemy.ancho, enemy.x, enemy.y, "gray", speed));
         });
         const player = new Rectangulo(50, 50, 300, 550, "black");
         const coin = new Rectangulo(40, 30, 350, 350, "black");
         document.addEventListener("keydown", (e) => {
+            start = true;
             music.play();
             console.log(e.keyCode);
             //x = Math.floor(Math.random() * 600), y = Math.floor(Math.random() * 600);
@@ -138,84 +190,22 @@
         })
         function update() {
             if (!pause) {
-                /* switch (dir) {
-                    case 1:
-                        // y -= 10; 
-                        player.y -= speed;
-                        if (player.y < -50) { player.y = 600 }
-                        break;
-                    case 2:
-                        // x -= 10; 
-                        player.x -= speed;
-                        if (player.x < -50) { player.x = 600 }
-                        break;
-                    case 3:
-                        player.y += speed;
-                        // y += 10; 
-                        if (player.y > 600) { player.y = 0 }
-                        break;
-                    case 4:
-                        player.x += speed;
-                        // x += 10; 
-                        if (player.x > 600) { player.x = 0 }
-                        break;
-
-                } */
-                //pendientes
-                muros.forEach(muro => {
-                    if (muro.seTocan(player)) {
-                        switch (dir) {
-                            case 1:
-                                player.y += speed;
-                                break;
-                            case 2:
-                                player.x += speed;
-                                break;
-                            case 3:
-                                player.y -= speed;
-                                break;
-                            case 4:
-                                player.x -= speed;
-                                break;
-
+                if (start) {
+                    for (let i = 0; i < enemies[level - 1].length; i++) {
+                        if ((nuts[i].x - 5) > 50)
+                            nuts[i].x -= nuts[i].speed;
+                        else {
+                            nuts[i].x = 560;
+                            dekuscrib_spit.play();
                         }
-                    }
-                    if (muro.seTocan(coin)) {
-                        coin.x = Math.random() * 560;
-                        coin.y = Math.random() * 560;
-                    }
-                });
-
-                /* enemies.forEach(enemy => {
-                    if (enemy.seTocan(player)) {
-
-                    }
-                    if (enemy.seTocan(coin)) {
-                        coin.x = Math.random() * 560;
-                        coin.y = Math.random() * 560;
-                        if (player.seTocan(coin)) {
-                            coin.x = Math.random() * 560;
-                            coin.y = Math.random() * 560;
+                        //player hit
+                        if (player.seTocan(nuts[i])) {
+                            link_dies.play();
+                            loses = true;
+                            pause = true
                         }
-                    }
-                }); */
-                for (let i = 0; i < nuts.length; i++) {
-                    if ((nuts[i].x - 5) > 50)
-                        nuts[i].x -= i + 1;
-                    else {
-                        nuts[i].x = 560;
-                        dekuscrib_spit.play();
-                    }
-                    //player hit
-                    if (player.seTocan(nuts[i])) {
-                        link_dies.play();
-                        loses = true;
-                        pause = true
                     }
                 }
-                /* nuts.forEach(nut => {
-                    
-                }); */
                 if (player.seTocan(coin)) {
                     rupiaSound.play();
                     coin.x = Math.random() * 560;
@@ -225,7 +215,6 @@
 
             }
             repaint();
-            /* crearRectangulo(ctx, color, x, y, size); */
             window.requestAnimationFrame(update);
         }
         function repaint() {
@@ -239,24 +228,21 @@
                 ctx.font = "30px verdana";
                 ctx.fillStyle = 'black';
                 ctx.fillText("Score:" + score, 10, 30);
-                switch (level) {
-                    case 1:
-                        //player.paint(ctx);
-                        ctx.drawImage(link, player.x, player.y, player.ancho, player.alto);
-                        //coin.paint(ctx);
-                        ctx.drawImage(rupia, coin.x, coin.y, coin.ancho, coin.alto);
-                        enemies.forEach(enemy => {
-                            ctx.drawImage(dekuscrub, enemy.x, enemy.y, enemy.ancho, enemy.alto);
-                        });
-                        nuts.forEach(nut => {
-                            ctx.drawImage(deku_nut, nut.x, nut.y + 20, nut.ancho / 2, nut.alto / 2);
-                        });
-                        break;
-                    case 2:
-                        break;
-                    case 3:
-                        break;
+                ctx.font = "30px verdana";
+                ctx.fillStyle = 'black';
+                ctx.fillText("Level:" + level, 250, 30);
+
+                //player.paint(ctx);
+                ctx.drawImage(link, player.x, player.y, player.ancho, player.alto);
+                //coin.paint(ctx);
+                ctx.drawImage(rupia, coin.x, coin.y, coin.ancho, coin.alto);
+                enemies[level - 1].forEach(enemy => {
+                    ctx.drawImage(dekuscrub, enemy.x, enemy.y, enemy.ancho, enemy.alto);
+                });
+                for (let i = 0; i < enemies[level - 1].length; i++) {
+                    ctx.drawImage(deku_nut, nuts[i].x, nuts[i].y + 20, nuts[i].ancho / 2, nuts[i].alto / 2);
                 }
+
                 ctx.stroke();
                 ctx.fill();
                 ctx.closePath();
@@ -290,6 +276,12 @@
             }
         }
         function restart() {
+
+            //Reiniciar posicion nueces
+            for (let i = 0; i < enemies[level - 1].length; i++) {
+                nuts[i].reiniciarPosicion(enemies[level - 1][i].x);
+            }
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
             level = 1;
             score = 0;
             loses = false;
