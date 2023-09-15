@@ -31,13 +31,24 @@
             y = 550,
         ];
         //level
+        let grass = new Image();
+        let dirt = new Image();
+        let stone = new Image();
         let music = new Audio();
         let gameover = new Audio();
+        let doorUnlocked = new Audio();
+        grass.src = "./src/assets/images/grass-texture.png";
+        dirt.src = "./src/assets/images/dirt-texture.png";
+        stone.src = "./src/assets/images/stone-texture.png";
         music.src = "./src/assets/sounds/background-music.mp3";
         gameover.src = "./src/assets/sounds/gameover.mp3";
+        doorUnlocked.src = "./src/assets/sounds/unlock-door.mp3";
+
         //LLave
         let llaveImage = new Image();
+        let getKey = new Audio();
         llaveImage.src = "./src/assets/images/key.png";
+        getKey.src = "./src/assets/sounds/get-key.mp3";
         //Deku
         let dekuscrub = new Image();
         let deku_nut = new Image();
@@ -83,9 +94,8 @@
             }
         }
         class DekuScrub extends Rectangulo {
-            constructor(alto, ancho, x, y, color, type) {
+            constructor(alto, ancho, x, y, color) {
                 super(alto, ancho, x, y, color);
-                this.type = type;
             }
         }
         class Nut extends Rectangulo {
@@ -116,8 +126,12 @@
         muros.push(new Rectangulo(40, 600, 0, 600, wallscolor));
         muros.push(new Rectangulo(40, 600, 0, 0, wallscolor));
 
+        const pasillos = [];
+        for (let i = 0; i < 5; i++) {
+            pasillos.push(new Rectangulo(50, 500, 50, (i + 1) * 100, 'black'));
+            pasillos.push(new Rectangulo(40, 490, 55, ((i + 1) * 100) + 5, 'rgb(231, 231, 231)'));
+        }
         const salida = new Rectangulo(50, 50, 275, 45, "red");
-
         const llaves = [
             [
                 new Llave(40, 40, 200, 150, "gray"),
@@ -126,38 +140,54 @@
             ],
             [
                 new Llave(40, 40, 200, 150, "gray"),
-                new Llave(40, 40, 355, 250, "gray"),
+                new Llave(40, 40, 355, 200, "gray"),
                 new Llave(40, 40, 155, 350, "gray"),
             ],
             [
-                new Llave(40, 40, 200, 150, "gray"),
-                new Llave(40, 40, 355, 250, "gray"),
-                new Llave(40, 40, 155, 350, "gray"),
+                new Llave(40, 40, 100, 205, "gray"),
+                new Llave(40, 40, 405, 305, "gray"),
+                new Llave(40, 40, 255, 455, "gray"),
             ],
         ];
-        console.log(llaves);
-        const piedras = [];
+        const piedras = [
+            [
+                new Rectangulo(40, 40, 250, 155, "gray"),
+                new Rectangulo(40, 40, 405, 255, "gray"),
+                new Rectangulo(40, 40, 155, 255, "gray"),
+            ],
+            [
+                new Rectangulo(40, 40, 200, 155, "gray"),
+                new Rectangulo(40, 40, 355, 205, "gray"),
+                new Rectangulo(40, 40, 155, 355, "gray"),
+            ],
+            [
+                new Rectangulo(40, 40, 100, 205, "gray"),
+                new Rectangulo(40, 40, 405, 305, "gray"),
+                new Rectangulo(40, 40, 305, 455, "gray"),
+            ],
+        ];
 
         const enemies = [
             [
-                new DekuScrub(40, 40, 555, 100, "gray", 'Strong'),
-                new DekuScrub(40, 40, 555, 200, "gray", 'Normal'),
-                new DekuScrub(40, 40, 555, 300, "gray", 'Weak'),
+                new DekuScrub(40, 40, 555, 100, "gray"),
+                new DekuScrub(40, 40, 555, 200, "gray"),
+                new DekuScrub(40, 40, 555, 300, "gray"),
             ],
             [
-                new DekuScrub(40, 40, 555, 100, "gray", 'Strong'),
-                new DekuScrub(40, 40, 555, 200, "gray", 'Strong'),
-                new DekuScrub(40, 40, 555, 300, "gray", 'Normal'),
-                new DekuScrub(40, 40, 555, 400, "gray", 'Normal'),
-                new DekuScrub(40, 40, 555, 500, "gray", 'Strong'),
+                new DekuScrub(40, 40, 555, 100, "gray"),
+                new DekuScrub(40, 40, 555, 200, "gray"),
+                new DekuScrub(40, 40, 555, 300, "gray"),
+                new DekuScrub(40, 40, 555, 400, "gray"),
+                new DekuScrub(40, 40, 555, 500, "gray"),
             ],
             [
-                new DekuScrub(40, 40, 555, 100, "gray", 'Strong'),
-                new DekuScrub(40, 40, 555, 200, "gray", 'Strong'),
-                new DekuScrub(40, 40, 555, 300, "gray", 'Strong'),
+                new DekuScrub(40, 40, 555, 100, "gray"),
+                new DekuScrub(40, 40, 555, 200, "gray"),
+                new DekuScrub(40, 40, 555, 300, "gray"),
+                new DekuScrub(40, 40, 555, 400, "gray"),
+                new DekuScrub(40, 40, 555, 500, "gray"),
             ],
         ];
-        //console.log(enemies);
         const nuts = [
             [
                 new Nut(40, 40, 555, 100, "gray", 5),
@@ -165,16 +195,18 @@
                 new Nut(40, 40, 555, 300, "gray", 3),
             ],
             [
+                new Nut(40, 40, 555, 100, "gray", 4),
+                new Nut(40, 40, 555, 200, "gray", 3),
+                new Nut(40, 40, 555, 300, "gray", 5),
+                new Nut(40, 40, 555, 400, "gray", 3),
+                new Nut(40, 40, 555, 500, "gray", 4),
+            ],
+            [
                 new Nut(40, 40, 555, 100, "gray", 5),
                 new Nut(40, 40, 555, 200, "gray", 5),
                 new Nut(40, 40, 555, 300, "gray", 4),
                 new Nut(40, 40, 555, 400, "gray", 4),
                 new Nut(40, 40, 555, 500, "gray", 5),
-            ],
-            [
-                new Nut(40, 40, 555, 100, "gray", 5),
-                new Nut(40, 40, 555, 200, "gray", 5),
-                new Nut(40, 40, 555, 300, "gray", 5),
             ],
         ];
         const player = new Rectangulo(50, 50, 300, 550, "black");
@@ -239,20 +271,6 @@
                             pause = true
                         }
                     });
-                    /* for (let i = 0; i < enemies[level - 1].length; i++) {
-                        if ((nuts[i].x - 5) > 50)
-                            nuts[i].x -= nuts[i].speed;
-                        else {
-                            nuts[i].x = 560;
-                            dekuscrib_spit.play();
-                        }
-                        //player hit
-                        if (player.seTocan(nuts[i])) {
-                            link_dies.play();
-                            loses = true;
-                            pause = true
-                        }
-                    } */
                     if (player.seTocan(coin)) {
                         rupiaSound.play();
                         coin.x = Math.random() * 560;
@@ -262,6 +280,7 @@
                     llaves[level - 1].forEach(llave => {
                         if (player.seTocan(llave)) {
                             console.log("Llave tomada");
+                            (keys < 2) ? getKey.play() : doorUnlocked.play();
                             llave.x = 700;
                             llave.y = 700;
                             keys++;
@@ -283,8 +302,12 @@
             if (!pause) {
                 ctx.fillStyle = "#ede1b5";
                 ctx.fillRect(0, 0, 600, 600);
+                ctx.drawImage(grass, 0, 0, 600, 600)
                 muros.forEach(muro => {
                     muro.paint(ctx);
+                });
+                pasillos.forEach(pasillo => {
+                    ctx.drawImage(dirt, pasillo.x, pasillo.y, pasillo.ancho, pasillo.alto); 
                 });
                 ctx.beginPath();
                 ctx.font = "30px verdana";
@@ -304,12 +327,11 @@
                 nuts[level - 1].forEach(nut => {
                     ctx.drawImage(deku_nut, nut.x, nut.y + 20, nut.ancho / 2, nut.alto / 2);
                 });
-                /* for (let i = 0; i < enemies[level - 1].length; i++) {
-                    if (nuts[i].x == undefined) { return; }
-                    ctx.drawImage(deku_nut, nuts[i].x, nuts[i].y + 20, nuts[i].ancho / 2, nuts[i].alto / 2);
-                } */
                 llaves[level - 1].forEach(llave => {
                     ctx.drawImage(llaveImage, llave.x, llave.y, llave.ancho, llave.alto);
+                });
+                piedras[level - 1].forEach(piedra => {
+                    ctx.drawImage(piedraSheika, piedra.x, piedra.y, piedra.ancho, piedra.alto);
                 });
 
                 ctx.stroke();
@@ -345,20 +367,6 @@
             }
         }
         function restart() {
-
-            //Reiniciar posicion nueces
-            nuts[level - 1].forEach(nut => {
-                nut.reiniciarPosicion()
-            });
-            /* for (let i = 0; i < enemies[level - 1].length; i++) {
-                nuts[i].reiniciarPosicion(enemies[level - 1][i].x);
-            } */
-            llaves[level - 1].forEach(llave => {
-                llave.reiniciarPosicion();
-            });
-            player.x = startPosition[0];
-            player.y = startPosition[1];
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
             level = 1;
             score = 0;
             keys = 0;
@@ -368,17 +376,25 @@
             gameover.pause();
             link_dies.pause();
             gameoverAntiLoop = false;
+            //Reiniciar posicion nueces
+            nuts[level - 1].forEach(nut => {
+                nut.reiniciarPosicion()
+            });
+            //Reiniciar llave
+            for (let i = 0; i < llaves.length; i++) {
+                llaves[i].forEach(llave => {
+                    llave.reiniciarPosicion();
+                });
+            }
+            player.x = startPosition[0];
+            player.y = startPosition[1];
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
         }
         function nivelCompletado() {
             (level < 3) ? level++ : ganaste = true;
             nuts[level - 1].forEach(nut => {
                 nut.reiniciarPosicion()
             });
-            //Reiniciar posicion nueces
-            /* for (let i = 0; i < enemies[level - 1].length; i++) {
-                console.log(nuts[i]);
-                nuts[i].reiniciarPosicion(enemies[level - 1][i].x);
-            } */
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             player.x = startPosition[0];
             player.y = startPosition[1];
