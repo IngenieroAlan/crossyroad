@@ -25,7 +25,8 @@
         let canvas = document.getElementById("myCanvas");
         let ctx = canvas.getContext("2d");
         let dir = 0, speed = 5, score = 0, level = 1, keys = 0;
-        let pause = false, loses = false, gameoverAntiLoop = false, start = false, ganaste = false;
+        let time = 6000;
+        let pause = false, loses = false, gameoverAntiLoop = false, start = false, winner = false;
         let startPosition = [
             x = 300,
             y = 550,
@@ -33,13 +34,11 @@
         //level
         let grass = new Image();
         let dirt = new Image();
-        let stone = new Image();
         let music = new Audio();
         let gameover = new Audio();
         let doorUnlocked = new Audio();
         grass.src = "./src/assets/images/grass-texture.png";
         dirt.src = "./src/assets/images/dirt-texture.png";
-        stone.src = "./src/assets/images/stone-texture.png";
         music.src = "./src/assets/sounds/background-music.mp3";
         gameover.src = "./src/assets/sounds/gameover.mp3";
         doorUnlocked.src = "./src/assets/sounds/unlock-door.mp3";
@@ -219,28 +218,28 @@
             /* console.log(e.keyCode); */
             switch (e.keyCode) {
                 case 87: case 38://w
-                    if (!pause) {
+                    if (!pause && !loses) {
                         link_step.play();
                         if ((player.y - 50) < 0) { return }
                         player.y -= 50;
                     };
                     break;
                 case 65: case 37://a
-                    if (!pause) {
+                    if (!pause && !loses) {
                         link_step.play();
                         if ((player.x - 50) < 50) { return }
                         player.x -= 50;
                     };
                     break;
                 case 83: case 40://s
-                    if (!pause) {
+                    if (!pause && !loses) {
                         link_step.play();
                         if ((player.y + 50) > 570) { return }
                         player.y += 50;
                     };
                     break;
                 case 68: case 39://d
-                    if (!pause) {
+                    if (!pause && !loses) {
                         link_step.play();
                         if ((player.x + 50) > 520) { return }
                         player.x += 50;
@@ -255,8 +254,13 @@
             }
         })
         function update() {
-            if (!pause) {
+            if (!pause && !loses) {
                 if (start) {
+                    if (!winner && !pause) {
+                        setTimeout(() => {
+                            (time <= 0) ? loses = true : time -= 1;
+                        }, 1000);
+                    }
                     nuts[level - 1].forEach(nut => {
                         if ((nut.x - 5) > 50)
                             nut.x -= nut.speed;
@@ -268,7 +272,6 @@
                         if (player.seTocan(nut)) {
                             link_dies.play();
                             loses = true;
-                            pause = true
                         }
                     });
                     if (player.seTocan(coin)) {
@@ -307,14 +310,16 @@
                     muro.paint(ctx);
                 });
                 pasillos.forEach(pasillo => {
-                    ctx.drawImage(dirt, pasillo.x, pasillo.y, pasillo.ancho, pasillo.alto); 
+                    ctx.drawImage(dirt, pasillo.x, pasillo.y, pasillo.ancho, pasillo.alto);
                 });
                 ctx.beginPath();
                 ctx.font = "30px verdana";
                 ctx.fillStyle = 'black';
                 ctx.fillText("Score:" + score, 10, 30);
-                ctx.fillText("Level:" + level, 250, 30);
-                ctx.fillText("Llaves:" + keys, 450, 30);
+                ctx.fillText("Nivel " + level, 250, 30);
+                ctx.font = "18px verdana";
+                ctx.fillText("Llaves:" + keys, 400, 25);
+                ctx.fillText("Tiempo:" + (parseInt(time / 100)), 490, 25);
 
                 //player.paint(ctx);
                 ctx.drawImage(link, player.x, player.y, player.ancho, player.alto);
@@ -338,32 +343,45 @@
                 ctx.fill();
                 ctx.closePath();
             } else {
-                if (loses) {
-                    music.pause();
-                    if (!gameoverAntiLoop) {
-                        gameover.play();
-                    }
-                    gameoverAntiLoop = true;
-                    ctx.fillStyle = "rgba(0, 0, 0, 0.02)";
-                    ctx.fillRect(0, 0, 600, 600);
-
-                    ctx.font = "30px verdana";
-                    ctx.strokeStyle = 'red';
-                    ctx.strokeText("Game over", 220, 300);
-                    ctx.fillStyle = 'orange';
-                    ctx.fillText("Game over", 220, 300);
-                    ctx.strokeStyle = "";
-                    ctx.font = "16px verdana";
-                    ctx.fillStyle = 'white';
-                    ctx.fillText('Presiona la tecla "R" para volver a intentar.', 140, 350);
-                } else {
-                    ctx.fillStyle = "rgba(122, 122, 122, 0.02)";
-                    ctx.fillRect(0, 0, 600, 600);
-
-                    ctx.font = "30px verdana";
-                    ctx.fillStyle = 'white';
-                    ctx.fillText("Pause", 270, 300);
+                ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
+                ctx.fillRect(0, 0, 600, 600);
+                ctx.font = "30px verdana";
+                ctx.fillStyle = 'white';
+                ctx.fillText("Pause", 270, 300);
+            }
+            if (loses) {
+                music.pause();
+                if (!gameoverAntiLoop) {
+                    gameover.play();
                 }
+                gameoverAntiLoop = true;
+                ctx.fillStyle = "rgba(0, 0, 0, 0.95)";
+                ctx.fillRect(0, 0, 600, 600);
+
+                ctx.font = "30px verdana";
+                ctx.strokeStyle = 'red';
+                ctx.strokeText("Game over", 220, 300);
+                ctx.fillStyle = 'orange';
+                ctx.fillText("Game over", 220, 300);
+                ctx.strokeStyle = "";
+                ctx.font = "16px verdana";
+                ctx.fillStyle = 'white';
+                ctx.fillText('Presiona la tecla "R" para volver a intentar.', 140, 350);
+            }
+            if (winner) {
+                ctx.fillStyle = "rgba(6, 119, 2, 0.9)";
+                ctx.fillRect(0, 0, 600, 600);
+
+                ctx.font = "30px verdana";
+                ctx.fillStyle = 'white';
+                ctx.fillText("Felicidades", (canvas.width / 2) - 75, 200);
+                ctx.fillText("Ganaste", (canvas.width / 2) - 55, 240);
+                ctx.font = "24px verdana";
+                ctx.fillText("Tu puntaje final fue de '" + score + "' puntos", (canvas.width / 2) - 190, 320);
+                ctx.fillText("Tiempo restante '" + (parseInt(time / 100)) + "' segundos", (canvas.width / 2) - 175, 370);
+                ctx.font = "16px verdana";
+                ctx.fillStyle = 'white';
+                ctx.fillText('Presiona la tecla "R" para volver a jugar.', 155, 450);
             }
         }
         function restart() {
@@ -372,7 +390,8 @@
             keys = 0;
             loses = false;
             pause = false;
-            ganaste = false;
+            winner = false;
+            time = 6000;
             gameover.pause();
             link_dies.pause();
             gameoverAntiLoop = false;
@@ -391,7 +410,7 @@
             ctx.clearRect(0, 0, canvas.width, canvas.height);
         }
         function nivelCompletado() {
-            (level < 3) ? level++ : ganaste = true;
+            (level < 3) ? level++ : winner = true;
             nuts[level - 1].forEach(nut => {
                 nut.reiniciarPosicion()
             });
@@ -401,7 +420,6 @@
             score += 100;
             keys = 0;
         }
-
         window.requestAnimationFrame = (function () {
             return window.requestAnimationFrame ||
                 window.webkitRequestAnimationFrame ||
