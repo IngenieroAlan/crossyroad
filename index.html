@@ -34,11 +34,15 @@
         //level
         let grass = new Image();
         let dirt = new Image();
+        let openedDoor = new Image();
+        let closedDoor = new Image();
         let music = new Audio();
         let gameover = new Audio();
         let doorUnlocked = new Audio();
         grass.src = "./src/assets/images/grass-texture.png";
         dirt.src = "./src/assets/images/dirt-texture.png";
+        closedDoor.src = "./src/assets/images/puerta-abierta.png"
+        openedDoor.src = "./src/assets/images/puerta-cerrada.png"
         music.src = "./src/assets/sounds/background-music.mp3";
         gameover.src = "./src/assets/sounds/gameover.mp3";
         doorUnlocked.src = "./src/assets/sounds/unlock-door.mp3";
@@ -361,7 +365,10 @@
                 //player.paint(ctx);
                 ctx.drawImage(link, player.x, player.y, player.ancho, player.alto);
                 //coin.paint(ctx);
-                salida.paint(ctx);
+                (keys < 3)
+                    ? ctx.drawImage(openedDoor, salida.x, salida.y, salida.ancho, salida.alto)
+                    : ctx.drawImage(closedDoor, salida.x, salida.y, salida.ancho, salida.alto);
+                //salida.paint(ctx);
                 enemies[level - 1].forEach(enemy => {
                     ctx.drawImage(dekuscrub, enemy.x, enemy.y, enemy.ancho, enemy.alto);
                 });
