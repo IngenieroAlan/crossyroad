@@ -6,7 +6,7 @@
     <meta name="viewport"
         content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Actividades</title>
+    <title>Zelda's Road</title>
     <style type="text/css">
         body {
             display: flex;
@@ -24,17 +24,34 @@
     <script>
         let canvas = document.getElementById("myCanvas");
         let ctx = canvas.getContext("2d");
-        let dir = 0, speed = 5, score = 0, level = 1;
-        let pause = false, loses = false, gameoverAntiLoop = false;
+        let dir = 0, speed = 5, score = 0, level = 1, keys = 0;
+        let time = 6000;
+        let pause = false, loses = false, gameoverAntiLoop = false, start = false, winner = false;
         let startPosition = [
             x = 300,
             y = 550,
         ];
         //level
+        let grass = new Image();
+        let dirt = new Image();
+        let openedDoor = new Image();
+        let closedDoor = new Image();
         let music = new Audio();
         let gameover = new Audio();
+        let doorUnlocked = new Audio();
+        grass.src = "./src/assets/images/grass-texture.png";
+        dirt.src = "./src/assets/images/dirt-texture.png";
+        closedDoor.src = "./src/assets/images/puerta-abierta.png"
+        openedDoor.src = "./src/assets/images/puerta-cerrada.png"
         music.src = "./src/assets/sounds/background-music.mp3";
         gameover.src = "./src/assets/sounds/gameover.mp3";
+        doorUnlocked.src = "./src/assets/sounds/unlock-door.mp3";
+
+        //LLave
+        let llaveImage = new Image();
+        let getKey = new Audio();
+        llaveImage.src = "./src/assets/images/key.png";
+        getKey.src = "./src/assets/sounds/get-key.mp3";
         //Deku
         let dekuscrub = new Image();
         let deku_nut = new Image();
@@ -54,7 +71,9 @@
         let rupiaSound = new Audio();
         rupia.src = "./src/assets/images/rupia.png";
         rupiaSound.src = "./src/assets/sounds/rupee_sound.mp3";
-
+        //Piedra sheika
+        let piedraSheika = new Image();
+        piedraSheika.src = "./src/assets/images/piedra-sheika.png";
         class Rectangulo {
             constructor(alto, ancho, x, y, color) {
                 this.alto = alto;
@@ -64,10 +83,10 @@
                 this.color = color;
             }
             seTocan(target) {
-                if (this.x < target.x + target.ancho
-                    && this.x + this.ancho > target.x
-                    && this.y < target.y + target.alto
-                    && this.y + this.alto > target.y) {
+                if (this.x < target.x + target.ancho &&
+                    this.x + this.ancho > target.x &&
+                    this.y < target.y + target.alto &&
+                    this.y + this.alto > target.y) {
                     return true;
                 }
                 return false;
@@ -77,6 +96,32 @@
                 ctx.fillRect(this.x, this.y, this.ancho, this.alto);
             }
         }
+        class DekuScrub extends Rectangulo {
+            constructor(alto, ancho, x, y, color) {
+                super(alto, ancho, x, y, color);
+            }
+        }
+        class Nut extends Rectangulo {
+            constructor(alto, ancho, x, y, color, speed) {
+                super(alto, ancho, x, y, color);
+                this.initX = x;
+                this.speed = speed;
+            }
+            reiniciarPosicion() {
+                this.x = this.initX;
+            }
+        }
+        class Llave extends Rectangulo {
+            constructor(alto, ancho, x, y, color) {
+                super(alto, ancho, x, y, color);
+                this.initX = x;
+                this.initY = y;
+            }
+            reiniciarPosicion() {
+                this.x = this.initX;
+                this.y = this.initY;
+            }
+        }
         let wallscolor = "#70865e"
         const muros = [];
         muros.push(new Rectangulo(600, 50, 0, 0, wallscolor));
@@ -84,48 +129,160 @@
         muros.push(new Rectangulo(40, 600, 0, 600, wallscolor));
         muros.push(new Rectangulo(40, 600, 0, 0, wallscolor));
 
-        const enemies = [];
-        enemies.push(new Rectangulo(40, 40, 555, 100, "gray"));
-        enemies.push(new Rectangulo(40, 40, 555, 200, "gray"));
-        enemies.push(new Rectangulo(40, 40, 555, 300, "gray"));
-        const nuts = [];
-        enemies.forEach(enemy => {
-            nuts.push(new Rectangulo(enemy.alto, enemy.ancho, enemy.x, enemy.y, "gray"));
-        });
+        const pasillos = [];
+        for (let i = 0; i < 5; i++) {
+            pasillos.push(new Rectangulo(50, 500, 50, (i + 1) * 100, 'black'));
+            pasillos.push(new Rectangulo(40, 490, 55, ((i + 1) * 100) + 5, 'rgb(231, 231, 231)'));
+        }
+        const salida = new Rectangulo(50, 50, 275, 45, "red");
+        const llaves = [
+            [
+                new Llave(40, 40, 200, 155, "gray"),
+                new Llave(40, 40, 355, 255, "gray"),
+                new Llave(40, 40, 105, 255, "gray"),
+            ],
+            [
+                new Llave(40, 40, 200, 155, "gray"),
+                new Llave(40, 40, 355, 205, "gray"),
+                new Llave(40, 40, 155, 355, "gray"),
+            ],
+            [
+                new Llave(40, 40, 100, 205, "gray"),
+                new Llave(40, 40, 405, 305, "gray"),
+                new Llave(40, 40, 255, 455, "gray"),
+            ],
+        ];
+        const piedras = [
+            [
+                new Rectangulo(40, 40, 250, 155, "gray"),
+                new Rectangulo(40, 40, 405, 255, "gray"),
+                new Rectangulo(40, 40, 155, 255, "gray"),
+            ],
+            [
+                new Rectangulo(40, 40, 145, 155, "gray"),
+                new Rectangulo(40, 40, 355, 255, "gray"),
+                new Rectangulo(40, 40, 205, 355, "gray"),
+            ],
+            [
+                new Rectangulo(40, 40, 150, 255, "gray"),
+                new Rectangulo(40, 40, 405, 355, "gray"),
+                new Rectangulo(40, 40, 305, 455, "gray"),
+            ],
+        ];
+
+        const enemies = [
+            [
+                new DekuScrub(40, 40, 555, 100, "gray"),
+                new DekuScrub(40, 40, 555, 200, "gray"),
+                new DekuScrub(40, 40, 555, 300, "gray"),
+            ],
+            [
+                new DekuScrub(40, 40, 555, 100, "gray"),
+                new DekuScrub(40, 40, 555, 200, "gray"),
+                new DekuScrub(40, 40, 555, 300, "gray"),
+                new DekuScrub(40, 40, 555, 400, "gray"),
+                new DekuScrub(40, 40, 555, 500, "gray"),
+            ],
+            [
+                new DekuScrub(40, 40, 555, 100, "gray"),
+                new DekuScrub(40, 40, 555, 200, "gray"),
+                new DekuScrub(40, 40, 555, 300, "gray"),
+                new DekuScrub(40, 40, 555, 400, "gray"),
+                new DekuScrub(40, 40, 555, 500, "gray"),
+            ],
+        ];
+        const nuts = [
+            [
+                new Nut(40, 40, 555, 100, "gray", 5),
+                new Nut(40, 40, 555, 200, "gray", 4),
+                new Nut(40, 40, 555, 300, "gray", 3),
+            ],
+            [
+                new Nut(40, 40, 555, 100, "gray", 4),
+                new Nut(40, 40, 555, 200, "gray", 3),
+                new Nut(40, 40, 555, 300, "gray", 5),
+                new Nut(40, 40, 555, 400, "gray", 3),
+                new Nut(40, 40, 555, 500, "gray", 4),
+            ],
+            [
+                new Nut(40, 40, 555, 100, "gray", 5),
+                new Nut(40, 40, 555, 200, "gray", 5),
+                new Nut(40, 40, 555, 300, "gray", 4),
+                new Nut(40, 40, 555, 400, "gray", 4),
+                new Nut(40, 40, 555, 500, "gray", 5),
+            ],
+        ];
         const player = new Rectangulo(50, 50, 300, 550, "black");
-        const coin = new Rectangulo(40, 30, 350, 350, "black");
+        const coins = [
+            [
+                new Rectangulo(40, 30, 450, 155, "gray"),
+                new Rectangulo(40, 30, 155, 355, "gray"),
+                new Rectangulo(40, 30, 475, 255, "gray"),
+            ],
+            [
+                new Rectangulo(40, 30, 100, 155, "gray"),
+                new Rectangulo(40, 30, 305, 255, "gray"),
+                new Rectangulo(40, 30, 455, 455, "gray"),
+            ],
+            [
+                new Rectangulo(40, 30, 400, 255, "gray"),
+                new Rectangulo(40, 30, 205, 355, "gray"),
+                new Rectangulo(40, 30, 355, 455, "gray"),
+            ],
+        ];
         document.addEventListener("keydown", (e) => {
+            start = true;
             music.play();
-            console.log(e.keyCode);
+            //console.log(e.keyCode);
             //x = Math.floor(Math.random() * 600), y = Math.floor(Math.random() * 600);
             /* console.log(e.keyCode); */
             switch (e.keyCode) {
                 case 87: case 38://w
-                    if (!pause) {
+                    if (!pause && !loses) {
                         link_step.play();
                         if ((player.y - 50) < 0) { return }
                         player.y -= 50;
+                        piedras[level - 1].forEach(piedra => {
+                            if (player.seTocan(piedra)) {
+                                player.y += 50;
+                            }
+                        });
                     };
                     break;
                 case 65: case 37://a
-                    if (!pause) {
+                    if (!pause && !loses) {
                         link_step.play();
                         if ((player.x - 50) < 50) { return }
                         player.x -= 50;
+                        piedras[level - 1].forEach(piedra => {
+                            if (player.seTocan(piedra)) {
+                                player.x += 50;
+                            }
+                        });
                     };
                     break;
                 case 83: case 40://s
-                    if (!pause) {
+                    if (!pause && !loses) {
                         link_step.play();
                         if ((player.y + 50) > 570) { return }
                         player.y += 50;
+                        piedras[level - 1].forEach(piedra => {
+                            if (player.seTocan(piedra)) {
+                                player.y -= 50;
+                            }
+                        });
                     };
                     break;
                 case 68: case 39://d
-                    if (!pause) {
+                    if (!pause && !loses) {
                         link_step.play();
                         if ((player.x + 50) > 520) { return }
                         player.x += 50;
+                        piedras[level - 1].forEach(piedra => {
+                            if (player.seTocan(piedra)) {
+                                player.x -= 50;
+                            }
+                        });
                     };
                     break;
                 case 32://Spacebar
@@ -137,172 +294,177 @@
             }
         })
         function update() {
-            if (!pause) {
-                /* switch (dir) {
-                    case 1:
-                        // y -= 10; 
-                        player.y -= speed;
-                        if (player.y < -50) { player.y = 600 }
-                        break;
-                    case 2:
-                        // x -= 10; 
-                        player.x -= speed;
-                        if (player.x < -50) { player.x = 600 }
-                        break;
-                    case 3:
-                        player.y += speed;
-                        // y += 10; 
-                        if (player.y > 600) { player.y = 0 }
-                        break;
-                    case 4:
-                        player.x += speed;
-                        // x += 10; 
-                        if (player.x > 600) { player.x = 0 }
-                        break;
+            if (!pause && !loses && !winner) {
+                if (start) {
+                    setTimeout(() => {
+                        (time <= 0) ? loses = true : time -= 1;
+                    }, 1000);
 
-                } */
-                //pendientes
-                muros.forEach(muro => {
-                    if (muro.seTocan(player)) {
-                        switch (dir) {
-                            case 1:
-                                player.y += speed;
-                                break;
-                            case 2:
-                                player.x += speed;
-                                break;
-                            case 3:
-                                player.y -= speed;
-                                break;
-                            case 4:
-                                player.x -= speed;
-                                break;
-
+                    nuts[level - 1].forEach(nut => {
+                        if ((nut.x - 5) > 50)
+                            nut.x -= nut.speed;
+                        else {
+                            nut.x = 560;
+                            dekuscrib_spit.play();
                         }
-                    }
-                    if (muro.seTocan(coin)) {
-                        coin.x = Math.random() * 560;
-                        coin.y = Math.random() * 560;
-                    }
-                });
-
-                /* enemies.forEach(enemy => {
-                    if (enemy.seTocan(player)) {
-
-                    }
-                    if (enemy.seTocan(coin)) {
-                        coin.x = Math.random() * 560;
-                        coin.y = Math.random() * 560;
+                        //player hit
+                        if (player.seTocan(nut)) {
+                            link_dies.play();
+                            loses = true;
+                        }
+                    });
+                    coins[level - 1].forEach(coin => {
                         if (player.seTocan(coin)) {
-                            coin.x = Math.random() * 560;
-                            coin.y = Math.random() * 560;
+                            rupiaSound.play();
+                            coin.x = 700;
+                            coin.y = 700;
+                            score += 10;
+                        }
+                    });
+                    llaves[level - 1].forEach(llave => {
+                        if (player.seTocan(llave)) {
+                            console.log("Llave tomada");
+                            (keys < 2) ? getKey.play() : doorUnlocked.play();
+                            llave.x = 700;
+                            llave.y = 700;
+                            keys++;
+                            score += 50;
+                        }
+                    });
+                    if (player.seTocan(salida)) {
+                        if (keys == 3) {
+                            nivelCompletado();
                         }
                     }
-                }); */
-                for (let i = 0; i < nuts.length; i++) {
-                    if ((nuts[i].x - 5) > 50)
-                        nuts[i].x -= i + 1;
-                    else {
-                        nuts[i].x = 560;
-                        dekuscrib_spit.play();
-                    }
-                    //player hit
-                    if (player.seTocan(nuts[i])) {
-                        link_dies.play();
-                        loses = true;
-                        pause = true
-                    }
-                }
-                /* nuts.forEach(nut => {
-                    
-                }); */
-                if (player.seTocan(coin)) {
-                    rupiaSound.play();
-                    coin.x = Math.random() * 560;
-                    coin.y = Math.random() * 560;
-                    score += 10;
                 }
 
             }
             repaint();
-            /* crearRectangulo(ctx, color, x, y, size); */
             window.requestAnimationFrame(update);
         }
         function repaint() {
             if (!pause) {
                 ctx.fillStyle = "#ede1b5";
                 ctx.fillRect(0, 0, 600, 600);
+                ctx.drawImage(grass, 0, 0, 600, 600)
                 muros.forEach(muro => {
                     muro.paint(ctx);
+                });
+                pasillos.forEach(pasillo => {
+                    ctx.drawImage(dirt, pasillo.x, pasillo.y, pasillo.ancho, pasillo.alto);
                 });
                 ctx.beginPath();
                 ctx.font = "30px verdana";
                 ctx.fillStyle = 'black';
                 ctx.fillText("Score:" + score, 10, 30);
-                switch (level) {
-                    case 1:
-                        //player.paint(ctx);
-                        ctx.drawImage(link, player.x, player.y, player.ancho, player.alto);
-                        //coin.paint(ctx);
-                        ctx.drawImage(rupia, coin.x, coin.y, coin.ancho, coin.alto);
-                        enemies.forEach(enemy => {
-                            ctx.drawImage(dekuscrub, enemy.x, enemy.y, enemy.ancho, enemy.alto);
-                        });
-                        nuts.forEach(nut => {
-                            ctx.drawImage(deku_nut, nut.x, nut.y + 20, nut.ancho / 2, nut.alto / 2);
-                        });
-                        break;
-                    case 2:
-                        break;
-                    case 3:
-                        break;
-                }
+                ctx.fillText("Nivel " + level, 250, 30);
+                ctx.font = "18px verdana";
+                ctx.fillText("Llaves:" + keys, 400, 25);
+                ctx.fillText("Tiempo:" + (parseInt(time / 100)), 490, 25);
+
+                //player.paint(ctx);
+                ctx.drawImage(link, player.x, player.y, player.ancho, player.alto);
+                //coin.paint(ctx);
+                (keys < 3)
+                    ? ctx.drawImage(openedDoor, salida.x, salida.y, salida.ancho, salida.alto)
+                    : ctx.drawImage(closedDoor, salida.x, salida.y, salida.ancho, salida.alto);
+                //salida.paint(ctx);
+                enemies[level - 1].forEach(enemy => {
+                    ctx.drawImage(dekuscrub, enemy.x, enemy.y, enemy.ancho, enemy.alto);
+                });
+                coins[level - 1].forEach(coin => {
+                    ctx.drawImage(rupia, coin.x, coin.y, coin.ancho, coin.alto);
+                });
+                nuts[level - 1].forEach(nut => {
+                    ctx.drawImage(deku_nut, nut.x, nut.y + 20, nut.ancho / 2, nut.alto / 2);
+                });
+                llaves[level - 1].forEach(llave => {
+                    ctx.drawImage(llaveImage, llave.x, llave.y, llave.ancho, llave.alto);
+                });
+                piedras[level - 1].forEach(piedra => {
+                    ctx.drawImage(piedraSheika, piedra.x, piedra.y, piedra.ancho, piedra.alto);
+                });
+
                 ctx.stroke();
                 ctx.fill();
                 ctx.closePath();
             } else {
-                if (loses) {
-                    music.pause();
-                    if (!gameoverAntiLoop) {
-                        gameover.play();
-                    }
-                    gameoverAntiLoop = true;
-                    ctx.fillStyle = "rgba(0, 0, 0, 0.02)";
-                    ctx.fillRect(0, 0, 600, 600);
-
-                    ctx.font = "30px verdana";
-                    ctx.strokeStyle = 'red';
-                    ctx.strokeText("Game over", 220, 300);
-                    ctx.fillStyle = 'orange';
-                    ctx.fillText("Game over", 220, 300);
-                    ctx.strokeStyle = "";
-                    ctx.font = "16px verdana";
-                    ctx.fillStyle = 'white';
-                    ctx.fillText('Presiona la tecla "R" para volver a intentar.', 140, 350);
-                } else {
-                    ctx.fillStyle = "rgba(122, 122, 122, 0.02)";
-                    ctx.fillRect(0, 0, 600, 600);
-
-                    ctx.font = "30px verdana";
-                    ctx.fillStyle = 'white';
-                    ctx.fillText("Pause", 270, 300);
+                ctx.fillStyle = "rgba(0, 0, 0, 0.55)";
+                ctx.fillRect(0, 0, 600, 600);
+                ctx.font = "30px verdana";
+                ctx.fillStyle = 'white';
+                ctx.fillText("Pause", 270, 300);
+            }
+            if (loses) {
+                music.pause();
+                if (!gameoverAntiLoop) {
+                    gameover.play();
                 }
+                gameoverAntiLoop = true;
+                ctx.fillStyle = "rgba(0, 0, 0, 0.55)";
+                ctx.fillRect(0, 0, 600, 600);
+
+                ctx.font = "30px verdana";
+                ctx.strokeStyle = 'red';
+                ctx.strokeText("Game over", 220, 300);
+                ctx.fillStyle = 'orange';
+                ctx.fillText("Game over", 220, 300);
+                ctx.strokeStyle = "";
+                ctx.font = "16px verdana";
+                ctx.fillStyle = 'white';
+                ctx.fillText('Presiona la tecla "R" para volver a intentar.', 140, 350);
+            }
+            if (winner) {
+                ctx.fillStyle = "rgba(6, 119, 2, 0.9)";
+                ctx.fillRect(0, 0, 600, 600);
+
+                ctx.font = "30px verdana";
+                ctx.fillStyle = 'white';
+                ctx.fillText("Felicidades", (canvas.width / 2) - 75, 200);
+                ctx.fillText("Ganaste", (canvas.width / 2) - 55, 240);
+                ctx.font = "24px verdana";
+                ctx.fillText("Tu puntaje final fue de '" + score + "' puntos", (canvas.width / 2) - 190, 320);
+                ctx.fillText("Tiempo restante '" + (parseInt(time / 100)) + "' segundos", (canvas.width / 2) - 175, 370);
+                ctx.font = "16px verdana";
+                ctx.fillStyle = 'white';
+                ctx.fillText('Presiona la tecla "R" para volver a jugar.', 155, 450);
             }
         }
         function restart() {
             level = 1;
             score = 0;
+            keys = 0;
             loses = false;
             pause = false;
-            gameoverAntiLoop = false;
+            winner = false;
+            time = 6000;
             gameover.pause();
             link_dies.pause();
+            gameoverAntiLoop = false;
+            //Reiniciar posicion nueces
+            nuts[level - 1].forEach(nut => {
+                nut.reiniciarPosicion()
+            });
+            //Reiniciar llave
+            for (let i = 0; i < llaves.length; i++) {
+                llaves[i].forEach(llave => {
+                    llave.reiniciarPosicion();
+                });
+            }
             player.x = startPosition[0];
             player.y = startPosition[1];
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
         }
-        function random_rgba() {
-            var o = Math.round, r = Math.random, s = 255;
-            return 'rgba(' + o(r() * s) + ',' + o(r() * s) + ',' + o(r() * s) + ',' + r().toFixed(1) + ')';
+        function nivelCompletado() {
+            (level < 3) ? level++ : winner = true;
+            nuts[level - 1].forEach(nut => {
+                nut.reiniciarPosicion()
+            });
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            player.x = startPosition[0];
+            player.y = startPosition[1];
+            score += 100;
+            keys = 0;
         }
         window.requestAnimationFrame = (function () {
             return window.requestAnimationFrame ||
