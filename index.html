@@ -24,8 +24,8 @@
     <script>
         let canvas = document.getElementById("myCanvas");
         let ctx = canvas.getContext("2d");
-        let dir = 0, speed = 5, score = 0, level = 2;
-        let pause = false, loses = false, gameoverAntiLoop = false, start = false;
+        let dir = 0, speed = 5, score = 0, level = 1, keys = 0;
+        let pause = false, loses = false, gameoverAntiLoop = false, start = false, ganaste = false;
         let startPosition = [
             x = 300,
             y = 550,
@@ -35,6 +35,9 @@
         let gameover = new Audio();
         music.src = "./src/assets/sounds/background-music.mp3";
         gameover.src = "./src/assets/sounds/gameover.mp3";
+        //LLave
+        let llaveImage = new Image();
+        llaveImage.src = "./src/assets/images/key.png";
         //Deku
         let dekuscrub = new Image();
         let deku_nut = new Image();
@@ -88,10 +91,22 @@
         class Nut extends Rectangulo {
             constructor(alto, ancho, x, y, color, speed) {
                 super(alto, ancho, x, y, color);
+                this.initX = x;
                 this.speed = speed;
             }
-            reiniciarPosicion(initX) {
-                this.x = initX;
+            reiniciarPosicion() {
+                this.x = this.initX;
+            }
+        }
+        class Llave extends Rectangulo {
+            constructor(alto, ancho, x, y, color) {
+                super(alto, ancho, x, y, color);
+                this.initX = x;
+                this.initY = y;
+            }
+            reiniciarPosicion() {
+                this.x = this.initX;
+                this.y = this.initY;
             }
         }
         let wallscolor = "#70865e"
@@ -101,6 +116,26 @@
         muros.push(new Rectangulo(40, 600, 0, 600, wallscolor));
         muros.push(new Rectangulo(40, 600, 0, 0, wallscolor));
 
+        const salida = new Rectangulo(50, 50, 275, 45, "red");
+
+        const llaves = [
+            [
+                new Llave(40, 40, 200, 150, "gray"),
+                new Llave(40, 40, 355, 250, "gray"),
+                new Llave(40, 40, 155, 350, "gray"),
+            ],
+            [
+                new Llave(40, 40, 200, 150, "gray"),
+                new Llave(40, 40, 355, 250, "gray"),
+                new Llave(40, 40, 155, 350, "gray"),
+            ],
+            [
+                new Llave(40, 40, 200, 150, "gray"),
+                new Llave(40, 40, 355, 250, "gray"),
+                new Llave(40, 40, 155, 350, "gray"),
+            ],
+        ];
+        console.log(llaves);
         const piedras = [];
 
         const enemies = [
@@ -122,33 +157,32 @@
                 new DekuScrub(40, 40, 555, 300, "gray", 'Strong'),
             ],
         ];
-        console.log(enemies);
-        /* enemies.push(new DekuScrub(40, 40, 555, 100, "gray", 'Strong'));
-        enemies.push(new DekuScrub(40, 40, 555, 200, "gray", 'Normal'));
-        enemies.push(new DekuScrub(40, 40, 555, 300, "gray", 'Weak')); */
-        const nuts = [];
-        //Generar nueces
-        enemies[level - 1].forEach(enemy => {
-            switch (enemy.type) {
-                case 'Strong':
-                    speed = 5;
-                    break;
-                case 'Normal':
-                    speed = 4;
-                    break;
-                case 'Weak':
-                    speed = 3;
-                    break;
-
-            }
-            nuts.push(new Nut(enemy.alto, enemy.ancho, enemy.x, enemy.y, "gray", speed));
-        });
+        //console.log(enemies);
+        const nuts = [
+            [
+                new Nut(40, 40, 555, 100, "gray", 5),
+                new Nut(40, 40, 555, 200, "gray", 4),
+                new Nut(40, 40, 555, 300, "gray", 3),
+            ],
+            [
+                new Nut(40, 40, 555, 100, "gray", 5),
+                new Nut(40, 40, 555, 200, "gray", 5),
+                new Nut(40, 40, 555, 300, "gray", 4),
+                new Nut(40, 40, 555, 400, "gray", 4),
+                new Nut(40, 40, 555, 500, "gray", 5),
+            ],
+            [
+                new Nut(40, 40, 555, 100, "gray", 5),
+                new Nut(40, 40, 555, 200, "gray", 5),
+                new Nut(40, 40, 555, 300, "gray", 5),
+            ],
+        ];
         const player = new Rectangulo(50, 50, 300, 550, "black");
         const coin = new Rectangulo(40, 30, 350, 350, "black");
         document.addEventListener("keydown", (e) => {
             start = true;
             music.play();
-            console.log(e.keyCode);
+            //console.log(e.keyCode);
             //x = Math.floor(Math.random() * 600), y = Math.floor(Math.random() * 600);
             /* console.log(e.keyCode); */
             switch (e.keyCode) {
@@ -191,7 +225,21 @@
         function update() {
             if (!pause) {
                 if (start) {
-                    for (let i = 0; i < enemies[level - 1].length; i++) {
+                    nuts[level - 1].forEach(nut => {
+                        if ((nut.x - 5) > 50)
+                            nut.x -= nut.speed;
+                        else {
+                            nut.x = 560;
+                            dekuscrib_spit.play();
+                        }
+                        //player hit
+                        if (player.seTocan(nut)) {
+                            link_dies.play();
+                            loses = true;
+                            pause = true
+                        }
+                    });
+                    /* for (let i = 0; i < enemies[level - 1].length; i++) {
                         if ((nuts[i].x - 5) > 50)
                             nuts[i].x -= nuts[i].speed;
                         else {
@@ -204,13 +252,27 @@
                             loses = true;
                             pause = true
                         }
+                    } */
+                    if (player.seTocan(coin)) {
+                        rupiaSound.play();
+                        coin.x = Math.random() * 560;
+                        coin.y = Math.random() * 560;
+                        score += 10;
                     }
-                }
-                if (player.seTocan(coin)) {
-                    rupiaSound.play();
-                    coin.x = Math.random() * 560;
-                    coin.y = Math.random() * 560;
-                    score += 10;
+                    llaves[level - 1].forEach(llave => {
+                        if (player.seTocan(llave)) {
+                            console.log("Llave tomada");
+                            llave.x = 700;
+                            llave.y = 700;
+                            keys++;
+                            score += 50;
+                        }
+                    });
+                    if (player.seTocan(salida)) {
+                        if (keys == 3) {
+                            nivelCompletado();
+                        }
+                    }
                 }
 
             }
@@ -228,20 +290,27 @@
                 ctx.font = "30px verdana";
                 ctx.fillStyle = 'black';
                 ctx.fillText("Score:" + score, 10, 30);
-                ctx.font = "30px verdana";
-                ctx.fillStyle = 'black';
                 ctx.fillText("Level:" + level, 250, 30);
+                ctx.fillText("Llaves:" + keys, 450, 30);
 
                 //player.paint(ctx);
                 ctx.drawImage(link, player.x, player.y, player.ancho, player.alto);
                 //coin.paint(ctx);
+                salida.paint(ctx);
                 ctx.drawImage(rupia, coin.x, coin.y, coin.ancho, coin.alto);
                 enemies[level - 1].forEach(enemy => {
                     ctx.drawImage(dekuscrub, enemy.x, enemy.y, enemy.ancho, enemy.alto);
                 });
-                for (let i = 0; i < enemies[level - 1].length; i++) {
+                nuts[level - 1].forEach(nut => {
+                    ctx.drawImage(deku_nut, nut.x, nut.y + 20, nut.ancho / 2, nut.alto / 2);
+                });
+                /* for (let i = 0; i < enemies[level - 1].length; i++) {
+                    if (nuts[i].x == undefined) { return; }
                     ctx.drawImage(deku_nut, nuts[i].x, nuts[i].y + 20, nuts[i].ancho / 2, nuts[i].alto / 2);
-                }
+                } */
+                llaves[level - 1].forEach(llave => {
+                    ctx.drawImage(llaveImage, llave.x, llave.y, llave.ancho, llave.alto);
+                });
 
                 ctx.stroke();
                 ctx.fill();
@@ -278,24 +347,45 @@
         function restart() {
 
             //Reiniciar posicion nueces
-            for (let i = 0; i < enemies[level - 1].length; i++) {
+            nuts[level - 1].forEach(nut => {
+                nut.reiniciarPosicion()
+            });
+            /* for (let i = 0; i < enemies[level - 1].length; i++) {
                 nuts[i].reiniciarPosicion(enemies[level - 1][i].x);
-            }
+            } */
+            llaves[level - 1].forEach(llave => {
+                llave.reiniciarPosicion();
+            });
+            player.x = startPosition[0];
+            player.y = startPosition[1];
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             level = 1;
             score = 0;
+            keys = 0;
             loses = false;
             pause = false;
-            gameoverAntiLoop = false;
+            ganaste = false;
             gameover.pause();
             link_dies.pause();
+            gameoverAntiLoop = false;
+        }
+        function nivelCompletado() {
+            (level < 3) ? level++ : ganaste = true;
+            nuts[level - 1].forEach(nut => {
+                nut.reiniciarPosicion()
+            });
+            //Reiniciar posicion nueces
+            /* for (let i = 0; i < enemies[level - 1].length; i++) {
+                console.log(nuts[i]);
+                nuts[i].reiniciarPosicion(enemies[level - 1][i].x);
+            } */
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
             player.x = startPosition[0];
             player.y = startPosition[1];
+            score += 100;
+            keys = 0;
         }
-        function random_rgba() {
-            var o = Math.round, r = Math.random, s = 255;
-            return 'rgba(' + o(r() * s) + ',' + o(r() * s) + ',' + o(r() * s) + ',' + r().toFixed(1) + ')';
-        }
+
         window.requestAnimationFrame = (function () {
             return window.requestAnimationFrame ||
                 window.webkitRequestAnimationFrame ||
