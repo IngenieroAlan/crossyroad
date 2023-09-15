@@ -133,14 +133,14 @@
         const salida = new Rectangulo(50, 50, 275, 45, "red");
         const llaves = [
             [
-                new Llave(40, 40, 200, 150, "gray"),
-                new Llave(40, 40, 355, 250, "gray"),
-                new Llave(40, 40, 155, 350, "gray"),
+                new Llave(40, 40, 200, 155, "gray"),
+                new Llave(40, 40, 355, 255, "gray"),
+                new Llave(40, 40, 105, 255, "gray"),
             ],
             [
-                new Llave(40, 40, 200, 150, "gray"),
-                new Llave(40, 40, 355, 200, "gray"),
-                new Llave(40, 40, 155, 350, "gray"),
+                new Llave(40, 40, 200, 155, "gray"),
+                new Llave(40, 40, 355, 205, "gray"),
+                new Llave(40, 40, 155, 355, "gray"),
             ],
             [
                 new Llave(40, 40, 100, 205, "gray"),
@@ -155,13 +155,13 @@
                 new Rectangulo(40, 40, 155, 255, "gray"),
             ],
             [
-                new Rectangulo(40, 40, 200, 155, "gray"),
-                new Rectangulo(40, 40, 355, 205, "gray"),
-                new Rectangulo(40, 40, 155, 355, "gray"),
+                new Rectangulo(40, 40, 145, 155, "gray"),
+                new Rectangulo(40, 40, 355, 255, "gray"),
+                new Rectangulo(40, 40, 205, 355, "gray"),
             ],
             [
-                new Rectangulo(40, 40, 100, 205, "gray"),
-                new Rectangulo(40, 40, 405, 305, "gray"),
+                new Rectangulo(40, 40, 150, 255, "gray"),
+                new Rectangulo(40, 40, 405, 355, "gray"),
                 new Rectangulo(40, 40, 305, 455, "gray"),
             ],
         ];
@@ -209,7 +209,23 @@
             ],
         ];
         const player = new Rectangulo(50, 50, 300, 550, "black");
-        const coin = new Rectangulo(40, 30, 350, 350, "black");
+        const coins = [
+            [
+                new Rectangulo(40, 30, 450, 155, "gray"),
+                new Rectangulo(40, 30, 155, 355, "gray"),
+                new Rectangulo(40, 30, 475, 255, "gray"),
+            ],
+            [
+                new Rectangulo(40, 30, 100, 155, "gray"),
+                new Rectangulo(40, 30, 305, 255, "gray"),
+                new Rectangulo(40, 30, 455, 455, "gray"),
+            ],
+            [
+                new Rectangulo(40, 30, 400, 255, "gray"),
+                new Rectangulo(40, 30, 205, 355, "gray"),
+                new Rectangulo(40, 30, 355, 455, "gray"),
+            ],
+        ];
         document.addEventListener("keydown", (e) => {
             start = true;
             music.play();
@@ -222,6 +238,11 @@
                         link_step.play();
                         if ((player.y - 50) < 0) { return }
                         player.y -= 50;
+                        piedras[level - 1].forEach(piedra => {
+                            if (player.seTocan(piedra)) {
+                                player.y += 50;
+                            }
+                        });
                     };
                     break;
                 case 65: case 37://a
@@ -229,6 +250,11 @@
                         link_step.play();
                         if ((player.x - 50) < 50) { return }
                         player.x -= 50;
+                        piedras[level - 1].forEach(piedra => {
+                            if (player.seTocan(piedra)) {
+                                player.x += 50;
+                            }
+                        });
                     };
                     break;
                 case 83: case 40://s
@@ -236,6 +262,11 @@
                         link_step.play();
                         if ((player.y + 50) > 570) { return }
                         player.y += 50;
+                        piedras[level - 1].forEach(piedra => {
+                            if (player.seTocan(piedra)) {
+                                player.y -= 50;
+                            }
+                        });
                     };
                     break;
                 case 68: case 39://d
@@ -243,6 +274,11 @@
                         link_step.play();
                         if ((player.x + 50) > 520) { return }
                         player.x += 50;
+                        piedras[level - 1].forEach(piedra => {
+                            if (player.seTocan(piedra)) {
+                                player.x -= 50;
+                            }
+                        });
                     };
                     break;
                 case 32://Spacebar
@@ -254,13 +290,12 @@
             }
         })
         function update() {
-            if (!pause && !loses) {
+            if (!pause && !loses && !winner) {
                 if (start) {
-                    if (!winner && !pause) {
-                        setTimeout(() => {
-                            (time <= 0) ? loses = true : time -= 1;
-                        }, 1000);
-                    }
+                    setTimeout(() => {
+                        (time <= 0) ? loses = true : time -= 1;
+                    }, 1000);
+
                     nuts[level - 1].forEach(nut => {
                         if ((nut.x - 5) > 50)
                             nut.x -= nut.speed;
@@ -274,12 +309,14 @@
                             loses = true;
                         }
                     });
-                    if (player.seTocan(coin)) {
-                        rupiaSound.play();
-                        coin.x = Math.random() * 560;
-                        coin.y = Math.random() * 560;
-                        score += 10;
-                    }
+                    coins[level - 1].forEach(coin => {
+                        if (player.seTocan(coin)) {
+                            rupiaSound.play();
+                            coin.x = 700;
+                            coin.y = 700;
+                            score += 10;
+                        }
+                    });
                     llaves[level - 1].forEach(llave => {
                         if (player.seTocan(llave)) {
                             console.log("Llave tomada");
@@ -325,9 +362,11 @@
                 ctx.drawImage(link, player.x, player.y, player.ancho, player.alto);
                 //coin.paint(ctx);
                 salida.paint(ctx);
-                ctx.drawImage(rupia, coin.x, coin.y, coin.ancho, coin.alto);
                 enemies[level - 1].forEach(enemy => {
                     ctx.drawImage(dekuscrub, enemy.x, enemy.y, enemy.ancho, enemy.alto);
+                });
+                coins[level - 1].forEach(coin => {
+                    ctx.drawImage(rupia, coin.x, coin.y, coin.ancho, coin.alto);
                 });
                 nuts[level - 1].forEach(nut => {
                     ctx.drawImage(deku_nut, nut.x, nut.y + 20, nut.ancho / 2, nut.alto / 2);
@@ -343,7 +382,7 @@
                 ctx.fill();
                 ctx.closePath();
             } else {
-                ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
+                ctx.fillStyle = "rgba(0, 0, 0, 0.55)";
                 ctx.fillRect(0, 0, 600, 600);
                 ctx.font = "30px verdana";
                 ctx.fillStyle = 'white';
@@ -355,7 +394,7 @@
                     gameover.play();
                 }
                 gameoverAntiLoop = true;
-                ctx.fillStyle = "rgba(0, 0, 0, 0.95)";
+                ctx.fillStyle = "rgba(0, 0, 0, 0.55)";
                 ctx.fillRect(0, 0, 600, 600);
 
                 ctx.font = "30px verdana";
