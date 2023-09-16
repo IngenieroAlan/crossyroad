@@ -25,8 +25,8 @@
         let canvas = document.getElementById("myCanvas");
         let ctx = canvas.getContext("2d");
         let dir = 0, speed = 5, score = 0, level = 1, keys = 0;
-        let time = 6000;
-        let pause = false, loses = false, gameoverAntiLoop = false, start = false, winner = false;
+        let time = 9000;
+        let pause = false, loses = false, gameoverAntiLoop = false, winnerAntiLoop = false, start = false, winner = false;
         let startPosition = [
             x = 300,
             y = 550,
@@ -38,12 +38,16 @@
         let closedDoor = new Image();
         let music = new Audio();
         let gameover = new Audio();
+        let winnerSound = new Audio();
         let doorUnlocked = new Audio();
         grass.src = "./src/assets/images/grass-texture.png";
         dirt.src = "./src/assets/images/dirt-texture.png";
         closedDoor.src = "./src/assets/images/puerta-abierta.png"
         openedDoor.src = "./src/assets/images/puerta-cerrada.png"
         music.src = "./src/assets/sounds/background-music.mp3";
+        music.volume = 0.5;
+        winnerSound.src = "./src/assets/sounds/winner.mp3";
+        winnerSound.volume = 0.6;
         gameover.src = "./src/assets/sounds/gameover.mp3";
         doorUnlocked.src = "./src/assets/sounds/unlock-door.mp3";
 
@@ -59,6 +63,7 @@
         dekuscrub.src = "./src/assets/images/dekuscrub.png";
         deku_nut.src = "./src/assets/images/deku-nut.png";
         dekuscrib_spit.src = "./src/assets/sounds/dekuscrub_spit.mp3";
+        dekuscrib_spit.volume = 0.3;
         //Link
         let link = new Image();
         let link_step = new Audio();
@@ -111,7 +116,7 @@
                 this.x = this.initX;
             }
         }
-        class Llave extends Rectangulo {
+        class Item extends Rectangulo {
             constructor(alto, ancho, x, y, color) {
                 super(alto, ancho, x, y, color);
                 this.initX = x;
@@ -137,19 +142,19 @@
         const salida = new Rectangulo(50, 50, 275, 45, "red");
         const llaves = [
             [
-                new Llave(40, 40, 200, 155, "gray"),
-                new Llave(40, 40, 355, 255, "gray"),
-                new Llave(40, 40, 105, 255, "gray"),
+                new Item(40, 40, 200, 155, "gray"),
+                new Item(40, 40, 355, 255, "gray"),
+                new Item(40, 40, 105, 255, "gray"),
             ],
             [
-                new Llave(40, 40, 200, 155, "gray"),
-                new Llave(40, 40, 355, 205, "gray"),
-                new Llave(40, 40, 155, 355, "gray"),
+                new Item(40, 40, 200, 155, "gray"),
+                new Item(40, 40, 355, 205, "gray"),
+                new Item(40, 40, 155, 355, "gray"),
             ],
             [
-                new Llave(40, 40, 100, 205, "gray"),
-                new Llave(40, 40, 405, 305, "gray"),
-                new Llave(40, 40, 255, 455, "gray"),
+                new Item(40, 40, 100, 205, "gray"),
+                new Item(40, 40, 405, 305, "gray"),
+                new Item(40, 40, 255, 455, "gray"),
             ],
         ];
         const piedras = [
@@ -159,7 +164,7 @@
                 new Rectangulo(40, 40, 155, 255, "gray"),
             ],
             [
-                new Rectangulo(40, 40, 145, 155, "gray"),
+                new Rectangulo(40, 40, 150, 155, "gray"),
                 new Rectangulo(40, 40, 355, 255, "gray"),
                 new Rectangulo(40, 40, 205, 355, "gray"),
             ],
@@ -169,7 +174,6 @@
                 new Rectangulo(40, 40, 305, 455, "gray"),
             ],
         ];
-
         const enemies = [
             [
                 new DekuScrub(40, 40, 555, 100, "gray"),
@@ -215,19 +219,19 @@
         const player = new Rectangulo(50, 50, 300, 550, "black");
         const coins = [
             [
-                new Rectangulo(40, 30, 450, 155, "gray"),
-                new Rectangulo(40, 30, 155, 355, "gray"),
-                new Rectangulo(40, 30, 475, 255, "gray"),
+                new Item(40, 30, 450, 155, "gray"),
+                new Item(40, 30, 155, 355, "gray"),
+                new Item(40, 30, 475, 255, "gray"),
             ],
             [
-                new Rectangulo(40, 30, 100, 155, "gray"),
-                new Rectangulo(40, 30, 305, 255, "gray"),
-                new Rectangulo(40, 30, 455, 455, "gray"),
+                new Item(40, 30, 100, 155, "gray"),
+                new Item(40, 30, 305, 255, "gray"),
+                new Item(40, 30, 455, 455, "gray"),
             ],
             [
-                new Rectangulo(40, 30, 400, 255, "gray"),
-                new Rectangulo(40, 30, 205, 355, "gray"),
-                new Rectangulo(40, 30, 355, 455, "gray"),
+                new Item(40, 30, 400, 255, "gray"),
+                new Item(40, 30, 205, 355, "gray"),
+                new Item(40, 30, 355, 455, "gray"),
             ],
         ];
         document.addEventListener("keydown", (e) => {
@@ -240,7 +244,7 @@
                 case 87: case 38://w
                     if (!pause && !loses) {
                         link_step.play();
-                        if ((player.y - 50) < 0) { return }
+                        if ((player.y - 50) < 30) { return }
                         player.y -= 50;
                         piedras[level - 1].forEach(piedra => {
                             if (player.seTocan(piedra)) {
@@ -359,7 +363,7 @@
                 ctx.fillText("Score:" + score, 10, 30);
                 ctx.fillText("Nivel " + level, 250, 30);
                 ctx.font = "18px verdana";
-                ctx.fillText("Llaves:" + keys, 400, 25);
+                ctx.fillText("Llaves:" + keys + "/3", 375, 25);
                 ctx.fillText("Tiempo:" + (parseInt(time / 100)), 490, 25);
 
                 //player.paint(ctx);
@@ -415,6 +419,11 @@
                 ctx.fillText('Presiona la tecla "R" para volver a intentar.', 140, 350);
             }
             if (winner) {
+                music.pause();
+                if (!winnerAntiLoop) {
+                    winnerSound.play();
+                }
+                winnerAntiLoop = true;
                 ctx.fillStyle = "rgba(6, 119, 2, 0.9)";
                 ctx.fillRect(0, 0, 600, 600);
 
@@ -437,13 +446,19 @@
             loses = false;
             pause = false;
             winner = false;
-            time = 6000;
+            time = 9000;
             gameover.pause();
+            winnerSound.pause();
             link_dies.pause();
             gameoverAntiLoop = false;
+            winnerAntiLoop = false;
             //Reiniciar posicion nueces
             nuts[level - 1].forEach(nut => {
                 nut.reiniciarPosicion()
+            });
+            //Reinciar pos rupias
+            coins[level - 1].forEach(coin => {
+                coin.reiniciarPosicion()
             });
             //Reiniciar llave
             for (let i = 0; i < llaves.length; i++) {
